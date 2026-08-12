@@ -36,19 +36,6 @@ export default function PoolDetailPage() {
           <div>
             <strong>Address</strong>
             <p>{pool.address}</p>
-            <p className="map-links">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pool.address)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Google Maps
-              </a>
-              {" · "}
-              <a href={`https://maps.apple.com/?q=${encodeURIComponent(pool.address)}`} target="_blank" rel="noreferrer">
-                Apple Maps
-              </a>
-            </p>
           </div>
         )}
         {pool.phone && (
@@ -76,6 +63,27 @@ export default function PoolDetailPage() {
           </div>
         )}
       </div>
+
+      {pool.address && (
+        <div className="map-links">
+          <a
+            className="map-button"
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pool.address)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Google Maps
+          </a>
+          <a
+            className="map-button"
+            href={`https://maps.apple.com/?q=${encodeURIComponent(pool.address)}`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Apple Maps
+          </a>
+        </div>
+      )}
 
       {(closure.indefiniteClosure || closure.datedClosures.length > 0 || closure.note) && (
         <section className="closures">

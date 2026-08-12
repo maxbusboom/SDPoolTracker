@@ -236,16 +236,27 @@ main {
 }
 
 .map-links {
-  font-size: 0.82rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 1rem 0 1.5rem;
 }
 
-.map-links a {
-  color: var(--accent);
+.map-button {
+  display: inline-block;
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  white-space: nowrap;
   text-decoration: none;
+  transition: opacity 0.15s ease;
 }
 
-.map-links a:hover {
-  text-decoration: underline;
+.map-button:hover {
+  opacity: 0.85;
 }
 
 section {
