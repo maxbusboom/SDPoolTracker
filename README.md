@@ -13,6 +13,9 @@ its 15 individual pool pages, and the two PDFs the city publishes there:
 - **Pool Maintenance Closure Schedule** — a month x pool grid of scheduled
   maintenance closures, including indefinite renovation closures.
 
+Deployed as a static site on GitHub Pages, re-scraped on a schedule by
+GitHub Actions — see [Deploying to GitHub Pages](#deploying-to-github-pages).
+
 ## How the scraping works
 
 Both PDFs the city currently publishes are text-based, not scanned images,
@@ -38,42 +41,68 @@ structured data — call the pool to confirm hours in that case.
 ## Project layout
 
 ```
-server/   Express API + scraper (TypeScript, ESM)
-web/      React + Vite frontend
+server/               Scraper (TypeScript, ESM) + an optional Express API
+web/                  React + Vite frontend
+.github/workflows/    Scheduled scrape -> build -> deploy to GitHub Pages
 ```
 
-## Running it
+## How "up to date" it is
+
+GitHub Pages only serves static files — it can't run the scraper live on
+every visit. Instead, a GitHub Actions workflow
+(`.github/workflows/deploy.yml`) runs the scraper and redeploys the site
+every 12 hours, on every push to `main`, and on demand (Actions tab -> "Scrape
+and deploy to GitHub Pages" -> Run workflow).
+
+Within that, whether a pool shows as **open right now** is always computed
+live in your browser (against the last-scraped weekly schedule and closure
+dates) — that part is accurate to the minute. Only the underlying schedule
+and closure data itself is as fresh as the last scheduled scrape.
+
+## Deploying to GitHub Pages
+
+One-time setup on GitHub: **Settings -> Pages -> Build and deployment ->
+Source: "GitHub Actions"**. After that, every push to `main` (and the
+12-hour schedule) builds and deploys automatically via the included
+workflow — nothing else to configure. The site ends up at
+`https://<user>.github.io/<repo>/`.
+
+## Running it locally
 
 Requires Node 20+.
 
 ```bash
 npm install
 
-# Scrape sandiego.gov and cache the result to server/data/cache.json
+# Scrape sandiego.gov and write web/public/data.json (also cached to
+# server/data/cache.json)
 npm run scrape
 
-# Start the API (also auto-scrapes on first boot if no cache exists,
-# and re-scrapes every 12 hours on a schedule)
-npm run dev:server   # http://localhost:3001
-
-# In another terminal, start the frontend (proxies /api to :3001)
+# Start the frontend, reading that data.json as a static file
 npm run dev:web      # http://localhost:5173
 ```
 
-For a production build:
+To build the same static site the GitHub Actions workflow deploys:
 
 ```bash
-npm run build
-npm run dev:server   # serves the built web/dist as static files too
+npm run scrape
+npm run build --workspace web   # -> web/dist
 ```
 
-## API
+### Alternative: self-hosted with a live API
 
-- `GET /api/pools` — every pool with its current open/closed status
-- `GET /api/pools/:slug` — full detail: schedule, closures, address, phone,
-  source links
-- `GET /api/meta` — scrape timestamp, source PDF URLs, warnings
-- `POST /api/refresh` — force an immediate re-scrape
+`server/` also runs standalone as an Express API with its own cache and a
+12-hour cron refresh, if you'd rather self-host than use GitHub Pages
+(useful for `POST /api/refresh` to force an on-demand re-scrape, which a
+static site can't offer):
+
+```bash
+npm run dev:server   # http://localhost:3001 — GET /api/pools, /api/pools/:slug, /api/meta, POST /api/refresh
+```
+
+The frontend in this repo does not call this API (it reads `data.json`
+directly); it's kept as a separate deployment option, not wired together
+with the static build.
 
 ## Notes / limitations
 
@@ -86,4 +115,5 @@ npm run dev:server   # serves the built web/dist as static files too
   — only the citywide lap/rec/fitness schedule is.
 - If sandiego.gov reorganizes these pages or PDFs, `npm run scrape` will
   print warnings for anything it couldn't confidently parse rather than
-  silently producing wrong data.
+  silently producing wrong data. Check the Actions run log if the deployed
+  site's data looks stale or wrong.

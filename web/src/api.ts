@@ -1,17 +1,44 @@
-import type { PoolDetail, PoolListResponse } from "./types";
+import type { PoolDetail, PoolListItem, PoolListResponse, RawScrapeData } from "./types";
+import { computePoolStatus } from "./status";
 
-async function json<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? `Request failed: ${res.status}`);
+let dataPromise: Promise<RawScrapeData> | undefined;
+
+function loadData(): Promise<RawScrapeData> {
+  if (!dataPromise) {
+    dataPromise = fetch(`${import.meta.env.BASE_URL}data.json`, { cache: "no-cache" }).then((res) => {
+      if (!res.ok) {
+        throw new Error(
+          "No pool data found. Run `npm run scrape` to generate web/public/data.json before building/serving the site."
+        );
+      }
+      return res.json();
+    });
   }
-  return res.json();
+  return dataPromise;
 }
 
-export function fetchPools(): Promise<PoolListResponse> {
-  return fetch("/api/pools").then((r) => json<PoolListResponse>(r));
+export async function fetchPools(): Promise<PoolListResponse> {
+  const data = await loadData();
+  const pools: PoolListItem[] = data.pools.map((pool) => ({
+    slug: pool.slug,
+    name: pool.name,
+    address: pool.address,
+    phone: pool.phone,
+    status: computePoolStatus(pool),
+  }));
+  return { scrapedAt: data.scrapedAt, pools };
 }
 
-export function fetchPool(slug: string): Promise<PoolDetail> {
-  return fetch(`/api/pools/${slug}`).then((r) => json<PoolDetail>(r));
+export async function fetchPool(slug: string): Promise<PoolDetail> {
+  const data = await loadData();
+  const pool = data.pools.find((p) => p.slug === slug);
+  if (!pool) throw new Error("Pool not found");
+  return {
+    ...pool,
+    status: computePoolStatus(pool),
+    swimScheduleEffectiveDate: data.swimScheduleEffectiveDate,
+    swimScheduleSourceUrl: data.swimScheduleSourceUrl,
+    closureScheduleSourceUrl: data.closureScheduleSourceUrl,
+    scrapedAt: data.scrapedAt,
+  };
 }

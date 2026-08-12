@@ -61,3 +61,32 @@ export interface PoolListResponse {
   scrapedAt: string;
   pools: PoolListItem[];
 }
+
+// Shape of the static data.json produced by `npm run scrape` (mirrors the
+// server's ScrapeResult/PoolRecord types). The frontend fetches this file
+// directly and computes everything else (status, filtering) itself.
+export interface RawPoolRecord {
+  slug: string;
+  name: string;
+  url: string;
+  address?: string;
+  phone?: string;
+  dimensions?: string;
+  depth?: string;
+  lanes?: string;
+  programGuideUrl?: string;
+  schedule: WeeklySchedule;
+  closure: PoolClosureInfo;
+  scheduleNotes: string[];
+}
+
+export interface RawScrapeData {
+  scrapedAt: string;
+  swimScheduleEffectiveDate?: string;
+  swimScheduleSourceUrl: string;
+  closureScheduleSourceUrl: string;
+  closureScheduleUpdated?: string;
+  closureScheduleRange?: string;
+  pools: RawPoolRecord[];
+  warnings: string[];
+}
