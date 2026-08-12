@@ -149,6 +149,10 @@ main {
   color: var(--text);
 }
 
+.today-hours-label {
+  margin-right: 0.35rem;
+}
+
 .status-badge {
   display: inline-block;
   max-width: 100%;

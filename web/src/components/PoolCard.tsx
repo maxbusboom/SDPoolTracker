@@ -10,7 +10,13 @@ export default function PoolCard({ pool }: { pool: PoolListItem }) {
         <StatusBadge status={pool.status} />
       </div>
       {pool.status.status !== "maintenance-closed" && pool.todaysHours.length > 0 && (
-        <p className="today-hours">Today: {pool.todaysHours.join(", ")}</p>
+        <div className="today-hours">
+          <span className="today-hours-label">Today:</span>
+          {pool.todaysHours[0]}
+          {pool.todaysHours.slice(1).map((interval, i) => (
+            <div key={i}>{interval}</div>
+          ))}
+        </div>
       )}
       {pool.address && <p className="muted">{pool.address}</p>}
       {pool.phone && <p className="muted">{pool.phone}</p>}
