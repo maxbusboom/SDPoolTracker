@@ -66,9 +66,19 @@ export default function PoolDetailPage() {
 
       {pool.address && (
         <div className="map-links">
+          {/*
+            Both URLs are each platform's official "universal link" format
+            (the same links Yelp/OpenTable-style "get directions" buttons
+            use) — iOS/Android intercept them and open the native Google
+            Maps / Apple Maps app directly if it's installed, falling back
+            to the web map only when it isn't. Including the pool's name
+            alongside its address (rather than just the bare address) lets
+            each app resolve to the actual named venue instead of a plain
+            street-address pin.
+          */}
           <a
             className="map-button"
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pool.address)}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${pool.name}, ${pool.address}`)}`}
             target="_blank"
             rel="noreferrer"
           >
@@ -76,7 +86,7 @@ export default function PoolDetailPage() {
           </a>
           <a
             className="map-button"
-            href={`https://maps.apple.com/?q=${encodeURIComponent(pool.address)}`}
+            href={`https://maps.apple.com/?q=${encodeURIComponent(pool.name)}&address=${encodeURIComponent(pool.address)}`}
             target="_blank"
             rel="noreferrer"
           >
