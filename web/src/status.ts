@@ -114,6 +114,32 @@ export function computePoolStatus(pool: RawPoolRecord, now: PacificNow = getPaci
   };
 }
 
+/**
+ * Merges every program's time ranges for the given day into the overall
+ * span(s) the pool is accessible in some capacity, e.g. Lap Swim 7-11am
+ * plus Rec Swim 10am-2pm becomes a single "7:00am-2:00pm" range, while a
+ * genuine midday gap with nothing scheduled stays as two separate ranges.
+ */
+export function getDaysHours(pool: RawPoolRecord, dayKey: DayKey): string[] {
+  const programs = Object.keys(pool.schedule) as ProgramType[];
+  const ranges = programs
+    .flatMap((p) => pool.schedule[p][dayKey])
+    .slice()
+    .sort((a, b) => a.start - b.start);
+
+  const merged: TimeRange[] = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && range.start <= last.end) {
+      last.end = Math.max(last.end, range.end);
+    } else {
+      merged.push({ ...range });
+    }
+  }
+
+  return merged.map((r) => `${formatMinutes(r.start)}–${formatMinutes(r.end)}`);
+}
+
 function findNextOpening(pool: RawPoolRecord, now: PacificNow): string | undefined {
   const startIdx = DAY_KEYS.indexOf(now.dayKey);
   const programs = Object.keys(pool.schedule) as ProgramType[];

@@ -9,6 +9,9 @@ export default function PoolCard({ pool }: { pool: PoolListItem }) {
         <h2>{pool.name}</h2>
         <StatusBadge status={pool.status} />
       </div>
+      {pool.status.status !== "maintenance-closed" && pool.todaysHours.length > 0 && (
+        <p className="today-hours">Today: {pool.todaysHours.join(", ")}</p>
+      )}
       {pool.address && <p className="muted">{pool.address}</p>}
       {pool.phone && <p className="muted">{pool.phone}</p>}
     </Link>

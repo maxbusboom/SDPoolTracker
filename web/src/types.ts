@@ -24,6 +24,7 @@ export interface PoolListItem {
   address?: string;
   phone?: string;
   status: PoolStatusInfo;
+  todaysHours: string[];
 }
 
 export interface DatedClosure {

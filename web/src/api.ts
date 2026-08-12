@@ -1,5 +1,5 @@
 import type { PoolDetail, PoolListItem, PoolListResponse, RawScrapeData } from "./types";
-import { computePoolStatus } from "./status";
+import { computePoolStatus, getDaysHours, getPacificNow } from "./status";
 
 let dataPromise: Promise<RawScrapeData> | undefined;
 
@@ -19,12 +19,14 @@ function loadData(): Promise<RawScrapeData> {
 
 export async function fetchPools(): Promise<PoolListResponse> {
   const data = await loadData();
+  const now = getPacificNow();
   const pools: PoolListItem[] = data.pools.map((pool) => ({
     slug: pool.slug,
     name: pool.name,
     address: pool.address,
     phone: pool.phone,
-    status: computePoolStatus(pool),
+    status: computePoolStatus(pool, now),
+    todaysHours: getDaysHours(pool, now.dayKey),
   }));
   return { scrapedAt: data.scrapedAt, pools };
 }

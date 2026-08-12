@@ -142,6 +142,13 @@ main {
   margin: 0 0 0.4rem;
 }
 
+.today-hours {
+  margin: 0.5rem 0 0.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
 .status-badge {
   display: inline-block;
   max-width: 100%;
