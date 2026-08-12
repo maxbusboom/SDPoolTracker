@@ -235,6 +235,19 @@ main {
   margin: 0.15rem 0 0;
 }
 
+.map-links {
+  font-size: 0.82rem;
+}
+
+.map-links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.map-links a:hover {
+  text-decoration: underline;
+}
+
 section {
   margin-top: 2rem;
 }
