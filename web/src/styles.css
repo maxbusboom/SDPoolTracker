@@ -272,7 +272,7 @@ section h2 {
 .schedule-table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 640px;
+  min-width: 1080px;
   font-size: 0.88rem;
 }
 
@@ -282,6 +282,7 @@ section h2 {
   padding: 0.55rem 0.6rem;
   text-align: left;
   vertical-align: top;
+  white-space: nowrap;
 }
 
 .schedule-table thead th {
