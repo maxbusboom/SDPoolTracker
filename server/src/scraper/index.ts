@@ -3,7 +3,8 @@ import { fetchPoolPage } from "./fetchPoolPage.js";
 import { fetchBuffer } from "./fetchHtml.js";
 import { parseClosureSchedule } from "./parseClosureSchedule.js";
 import { parseSwimSchedule } from "./parseSwimSchedule.js";
-import type { PoolRecord, ScrapeResult } from "../types.js";
+import { parseProgramGuide, type PartialSchedule } from "./parseProgramGuide.js";
+import type { DayKey, PoolRecord, ProgramType, ScrapeResult } from "../types.js";
 
 export async function runScrape(): Promise<ScrapeResult> {
   const warnings: string[] = [];
@@ -25,25 +26,54 @@ export async function runScrape(): Promise<ScrapeResult> {
     fetchBuffer(swimScheduleUrl),
   ]);
 
-  const [closureResult, swimResult] = await Promise.all([
+  const [closureResult, swimResult, programGuideResults] = await Promise.all([
     parseClosureSchedule(closureBuffer, poolListings),
     parseSwimSchedule(swimBuffer, poolListings),
+    // Per-pool Program Guide PDFs take priority over the citywide combined
+    // schedule for Lap Swim / Rec Swim wherever they specify a day (see
+    // parseProgramGuide.ts). Fetched per-pool since each pool links its own.
+    Promise.all(
+      poolInfos.map(async (info) => {
+        if (!info.programGuideUrl) return { slug: info.slug, schedule: {} as PartialSchedule, warnings: [] };
+        try {
+          const buf = await fetchBuffer(info.programGuideUrl);
+          const result = await parseProgramGuide(buf, info.name);
+          return { slug: info.slug, ...result };
+        } catch (err) {
+          return {
+            slug: info.slug,
+            schedule: {} as PartialSchedule,
+            warnings: [`Failed to fetch/parse program guide for ${info.name}: ${(err as Error).message}`],
+          };
+        }
+      })
+    ),
   ]);
   warnings.push(...closureResult.warnings, ...swimResult.warnings);
+  for (const r of programGuideResults) warnings.push(...r.warnings);
+  const programGuideBySlug = new Map(programGuideResults.map((r) => [r.slug, r.schedule]));
 
   const pools: PoolRecord[] = poolInfos.map((info) => {
-    const schedule = swimResult.schedules.get(info.slug);
+    const schedule = swimResult.schedules.get(info.slug) ?? emptySchedule();
     const closure = closureResult.closures.get(info.slug) ?? { datedClosures: [] };
     const scheduleNotes = swimResult.poolNotes.get(info.slug) ?? [];
-    if (!schedule) {
+    if (!swimResult.schedules.get(info.slug)) {
       warnings.push(`No swim schedule data matched for pool "${info.name}" (${info.slug})`);
     }
-    return {
-      ...info,
-      schedule: schedule ?? emptySchedule(),
-      closure,
-      scheduleNotes,
-    };
+
+    const guideSchedule = programGuideBySlug.get(info.slug);
+    if (guideSchedule) {
+      for (const program of Object.keys(guideSchedule) as ProgramType[]) {
+        const guideDays = guideSchedule[program];
+        if (!guideDays) continue;
+        for (const day of Object.keys(guideDays) as DayKey[]) {
+          const ranges = guideDays[day];
+          if (ranges) schedule[program][day] = ranges;
+        }
+      }
+    }
+
+    return { ...info, schedule, closure, scheduleNotes };
   });
 
   return {

@@ -34,19 +34,27 @@ export async function fetchPoolPage(listing: PoolListing): Promise<PoolInfo> {
 
   // Pages often link both a current and a stale program guide PDF; the URL
   // path embeds a "YYYY-MM" upload date, so the most recent one is kept.
+  // Scanned from the raw HTML rather than through cheerio: these specific
+  // buttons are frequently wrapped in an HTML comment on this site (seen on
+  // several pools — e.g. a pool's current "Summer Program Guide" link sits
+  // inside a `<!-- -->` block right next to its live "Fall Program Guide"
+  // link, so cheerio's DOM silently drops the current one and this would
+  // otherwise serve two-year-stale hours). The comment doesn't stop the
+  // link or the PDF it points to from working, so reading the markup
+  // directly rather than through the DOM is what makes it reliable.
   let programGuideUrl: string | undefined;
   let programGuideDate = "";
-  $('a[href$=".pdf"]').each((_, el) => {
-    const text = $(el).text().trim().toLowerCase();
-    const href = $(el).attr("href");
-    if (!href || !text.includes("program guide")) return;
+  const linkRe = /<a[^>]*href="([^"]*\.pdf)"[^>]*>([^<]*)</gi;
+  for (const match of html.matchAll(linkRe)) {
+    const [, href, text] = match;
+    if (!text.toLowerCase().includes("program guide")) continue;
     const dateMatch = href.match(/(\d{4}-\d{2})/);
     const date = dateMatch?.[1] ?? "";
     if (!programGuideUrl || date > programGuideDate) {
       programGuideUrl = new URL(href, listing.url).toString();
       programGuideDate = date;
     }
-  });
+  }
 
   return {
     slug: listing.slug,
