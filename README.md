@@ -109,11 +109,20 @@ with the static build.
 - Status is computed in Pacific time from the scraped weekly schedule and
   closure dates. The city's own documents say hours are "subject to change
   without notice" — treat this as a planning tool, not a guarantee.
-- Pool-page scraping (address, phone, dimensions, program guide link) uses
-  each pool's dedicated page. Its seasonal "Program Guide" PDF (swim
-  lesson registration, etc.) is linked from the detail page but not parsed
-  — only the citywide lap/rec/fitness schedule is.
-- If sandiego.gov reorganizes these pages or PDFs, `npm run scrape` will
-  print warnings for anything it couldn't confidently parse rather than
-  silently producing wrong data. Check the Actions run log if the deployed
-  site's data looks stale or wrong.
+- Pool-page scraping (address, phone, dimensions) uses each pool's
+  dedicated page. Its per-pool "Program Guide" PDF is also fetched and its
+  Lap Swim / Rec Swim hours take priority over the citywide combined
+  schedule for any day it specifies (falling back to the combined schedule
+  otherwise); Water Fitness always comes from the combined schedule since
+  guide formatting for it varies too much per pool to parse generically.
+- URLs and links are all discovered dynamically (by link text/filename
+  patterns, not hardcoded addresses), so the scraper adapts automatically
+  when the city swaps in a new PDF each season. The three program
+  categories (Lap Swim / Recreational Swim / Water Fitness) *are* a fixed,
+  hardcoded set, though — that's a deliberate bet that these particular
+  categories are stable citywide-aquatics concepts, not a per-season detail.
+  If the city ever renames or adds one, `npm run scrape` logs a warning
+  ("doesn't match any known program" / "no Lap Swim or Recreation(al) Swim
+  heading found") naming the page/pool instead of silently dropping the
+  data — check the Actions run log if the deployed site's data looks stale
+  or a pool is missing an expected program.

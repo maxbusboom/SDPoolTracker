@@ -16,9 +16,12 @@ const DAY_NAME_TO_KEY: Record<string, DayKey> = {
 // format across pools' program guides. Water Fitness guides are class-style
 // free text (names, prices, prerequisites) that varies too much per pool to
 // parse generically, so it's left to the citywide combined schedule.
+// Tolerant of minor rewording the city might use season to season (e.g.
+// "Rec Swim" vs "Recreation Swim"); see the "no heading found" warning
+// below for what happens when a guide matches neither of these at all.
 const PROGRAM_HEADINGS: { program: ProgramType; pattern: RegExp }[] = [
-  { program: "lapSwim", pattern: /^lap\s+swim\b/i },
-  { program: "recSwim", pattern: /^recreation(al)?\s+swim\b/i },
+  { program: "lapSwim", pattern: /^lap\s+swim(ming)?\b/i },
+  { program: "recSwim", pattern: /^rec(reation(al)?)?\s+swim\b/i },
 ];
 
 const TIME_START_RE = /\d{1,2}(?::\d{2})?\s*[ap]\.?m\.?/i;
@@ -119,6 +122,12 @@ export async function parseProgramGuide(buffer: Buffer, poolName: string): Promi
     } else {
       warnings.push(`Program guide for ${poolName}: found a "${program}" heading but no parsable day/time rows.`);
     }
+  }
+
+  if (Object.keys(schedule).length === 0) {
+    warnings.push(
+      `Program guide for ${poolName}: no "Lap Swim" or "Recreation(al) Swim" heading found anywhere in the document — falling back entirely to the citywide combined schedule for this pool.`
+    );
   }
 
   return { schedule, warnings };

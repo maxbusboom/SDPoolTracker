@@ -15,10 +15,13 @@ const DAY_MARKERS: { key: DayKey; candidates: string[] }[] = [
   { key: "sun", candidates: ["Sunday"] },
 ];
 
+// Tolerant of minor rewording the city might use season to season (e.g.
+// "Rec Swim" vs "Recreational Swim"); see parsePage's warning below for
+// what happens when a page matches none of these at all.
 const PROGRAM_SECTIONS: { program: ProgramType; pattern: RegExp }[] = [
-  { program: "lapSwim", pattern: /lap\s*swim/i },
-  { program: "recSwim", pattern: /recreational\s*swim/i },
-  { program: "waterFitness", pattern: /water\s*fitness/i },
+  { program: "lapSwim", pattern: /lap\s*swim(ming)?/i },
+  { program: "recSwim", pattern: /rec(reation(al)?)?\s*swim/i },
+  { program: "waterFitness", pattern: /water\s*(fitness|aerobics)/i },
 ];
 
 function emptyWeeklySchedule(): WeeklySchedule {
@@ -58,9 +61,9 @@ export async function parseSwimSchedule(buffer: Buffer, pools: PoolListing[]): P
     return { schedules, poolNotes, effectiveDate, globalNotes, warnings };
   }
 
-  for (const page of extraction.pages) {
-    parsePage(page, pools, schedules, poolNotes, globalNotes, warnings);
-  }
+  extraction.pages.forEach((page, i) => {
+    parsePage(page, i, pools, schedules, poolNotes, globalNotes, warnings);
+  });
 
   for (const pool of pools) {
     fixLikelyMeridiemTypos(pool, schedules, warnings);
@@ -112,6 +115,7 @@ function fixLikelyMeridiemTypos(pool: PoolListing, schedules: Map<string, Weekly
 
 function parsePage(
   page: PdfPage,
+  pageIndex: number,
   pools: PoolListing[],
   schedules: Map<string, WeeklySchedule>,
   poolNotes: Map<string, string[]>,
@@ -120,7 +124,19 @@ function parsePage(
 ) {
   const items = page.items;
   const section = PROGRAM_SECTIONS.find((s) => items.some((i) => s.pattern.test(i.text)));
-  if (!section) return;
+  if (!section) {
+    const preview = [...items]
+      .sort((a, b) => a.y - b.y || a.x - b.x)
+      .map((i) => i.text)
+      .join("")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
+    warnings.push(
+      `Swim schedule: page ${pageIndex + 1} doesn't match any known program (Lap Swim / Recreational Swim / Water Fitness) — its data was not parsed. Page starts with: "${preview}"`
+    );
+    return;
+  }
 
   const headerAnchor = items.find((i) => /^monday$/i.test(i.text.trim()));
   if (!headerAnchor) {
