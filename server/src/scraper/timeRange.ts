@@ -27,3 +27,16 @@ export function extractTimeRanges(text: string): TimeRange[] {
   }
   return ranges;
 }
+
+/** Toggles am<->pm for a minutes-since-midnight value (e.g. 11:30am <-> 11:30pm). */
+export function flipMeridiem(minutes: number): number {
+  return (minutes + 12 * 60) % (24 * 60);
+}
+
+export function formatClockLabel(minutes: number): string {
+  const h24 = Math.floor(minutes / 60) % 24;
+  const m = minutes % 60;
+  const period = h24 >= 12 ? "pm" : "am";
+  const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+  return `${h12}:${String(m).padStart(2, "0")}${period}`;
+}

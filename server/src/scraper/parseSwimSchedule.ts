@@ -2,7 +2,7 @@ import type { PoolListing } from "./fetchPoolList.js";
 import { extractPdf, type PdfPage } from "./pdfText.js";
 import { findColumnAnchors, toColumns, segmentRowsByLabel, groupIntoLines, bucketLine } from "./pdfTable.js";
 import { matchRowBuffer } from "./matchPool.js";
-import { extractTimeRanges } from "./timeRange.js";
+import { extractTimeRanges, flipMeridiem, formatClockLabel } from "./timeRange.js";
 import { DAY_KEYS, type DayKey, type ProgramType, type WeeklySchedule } from "../types.js";
 
 const DAY_MARKERS: { key: DayKey; candidates: string[] }[] = [
@@ -62,7 +62,52 @@ export async function parseSwimSchedule(buffer: Buffer, pools: PoolListing[]): P
     parsePage(page, pools, schedules, poolNotes, globalNotes, warnings);
   }
 
+  for (const pool of pools) {
+    fixLikelyMeridiemTypos(pool, schedules, warnings);
+  }
+
   return { schedules, poolNotes, effectiveDate, globalNotes: [...new Set(globalNotes)], warnings };
+}
+
+/**
+ * The source PDF occasionally lists a block whose end time's am/pm looks
+ * like a typo — e.g. Allied Gardens' Monday Lap Swim prints as
+ * "7:30am-11:30pm" *and* a separate "12:30pm-6:00pm" block, which only
+ * makes sense as a real schedule if the first block actually ends at
+ * 11:30am (otherwise it would already fully cover the second block,
+ * making that second listing meaningless). When one range for the same
+ * pool/program/day fully contains another, the outer range's end is
+ * assumed to have the wrong meridiem and is flipped if that removes the
+ * overlap.
+ */
+function fixLikelyMeridiemTypos(pool: PoolListing, schedules: Map<string, WeeklySchedule>, warnings: string[]) {
+  const schedule = schedules.get(pool.slug);
+  if (!schedule) return;
+
+  for (const program of Object.keys(schedule) as ProgramType[]) {
+    for (const day of DAY_KEYS) {
+      const ranges = schedule[program][day];
+      for (const outer of ranges) {
+        const containsAnother = ranges.some(
+          (inner) => inner !== outer && outer.start <= inner.start && outer.end >= inner.end
+        );
+        if (!containsAnother) continue;
+
+        const flippedEnd = flipMeridiem(outer.end);
+        const stillContainsSomething = ranges.some(
+          (inner) => inner !== outer && flippedEnd >= inner.start && flippedEnd <= inner.end
+        );
+        if (flippedEnd <= outer.start || stillContainsSomething) continue;
+
+        const oldLabel = outer.label;
+        outer.end = flippedEnd;
+        outer.label = `${formatClockLabel(outer.start)}-${formatClockLabel(outer.end)}`;
+        warnings.push(
+          `Swim schedule: corrected likely am/pm typo for ${pool.name} ${program} ${day} — "${oldLabel}" fully contained another listed block, changed to "${outer.label}"`
+        );
+      }
+    }
+  }
 }
 
 function parsePage(
