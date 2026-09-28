@@ -31,7 +31,12 @@ function formatDate(iso: string): string {
 
 function ProgramGuideNote({ guide }: { guide: ProgramGuideStatus }) {
   if (guide.status === "ok") {
-    return <p className="guide-note guide-ok">✓ Pool's program schedule read successfully</p>;
+    return (
+      <p className="guide-note guide-ok">
+        ✓ Pool's program schedule read successfully
+        {guide.updatedAt ? ` (guide updated ${formatDate(guide.updatedAt)})` : ""}
+      </p>
+    );
   }
   const fallback = "hours shown are from the citywide schedule";
   if (guide.status === "none") {

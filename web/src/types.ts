@@ -21,6 +21,9 @@ export interface PoolStatusInfo {
 export interface ProgramGuideStatus {
   status: "ok" | "failed" | "none";
   lastSuccessAt?: string;
+  sourceUrl?: string;
+  /** When the city last updated the guide PDF itself (HTTP Last-Modified) */
+  updatedAt?: string;
 }
 
 export interface PoolListItem {
@@ -57,6 +60,7 @@ export interface PoolDetail {
   schedule: WeeklySchedule;
   closure: PoolClosureInfo;
   scheduleNotes: string[];
+  programGuide?: ProgramGuideStatus;
   status: PoolStatusInfo;
   swimScheduleEffectiveDate?: string;
   swimScheduleSourceUrl: string;

@@ -29,3 +29,25 @@ export async function fetchBuffer(url: string): Promise<Buffer> {
   const arrayBuffer = await res.arrayBuffer();
   return Buffer.from(arrayBuffer);
 }
+
+export interface HeadInfo {
+  ok: boolean;
+  lastModified?: Date;
+  contentLength?: number;
+}
+
+export async function fetchHead(url: string): Promise<HeadInfo> {
+  try {
+    const res = await fetch(bustCache(url), { method: "HEAD", headers: { "User-Agent": USER_AGENT } });
+    const lm = res.headers.get("last-modified");
+    const lastModified = lm ? new Date(lm) : undefined;
+    const cl = res.headers.get("content-length");
+    return {
+      ok: res.ok,
+      lastModified: lastModified && !isNaN(lastModified.getTime()) ? lastModified : undefined,
+      contentLength: cl ? Number(cl) : undefined,
+    };
+  } catch {
+    return { ok: false };
+  }
+}

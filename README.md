@@ -118,7 +118,14 @@ with the static build.
   closure dates. The city's own documents say hours are "subject to change
   without notice" — treat this as a planning tool, not a guarantee.
 - Pool-page scraping (address, phone, dimensions) uses each pool's
-  dedicated page. Its per-pool "Program Guide" PDF is also fetched and its
+  dedicated page. Every "Program Guide" PDF the page links (the match
+  tolerates the non-breaking spaces the city sometimes puts in the link
+  text) is treated as a candidate; candidates are ranked by the file's HTTP
+  `Last-Modified` header — the city updates these PDFs *in place*, so the
+  `YYYY-MM` in the URL path is just the original upload month and says
+  nothing about freshness — and parsed newest-first until one yields a
+  schedule. (There's no better feed to query: the site's Drupal JSON API is
+  disabled and its XML sitemap lists pages, not files.) The winning guide's
   Lap Swim / Rec Swim hours take priority over the citywide combined
   schedule for any day it specifies (falling back to the combined schedule
   otherwise); Water Fitness always comes from the combined schedule since

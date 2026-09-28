@@ -145,6 +145,17 @@ export default function PoolDetailPage() {
               <a href={pool.programGuideUrl} target="_blank" rel="noreferrer">
                 Program guide (PDF)
               </a>
+              {pool.programGuide?.updatedAt && (
+                <span className="muted small">
+                  {" "}
+                  — updated{" "}
+                  {new Date(pool.programGuide.updatedAt).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              )}
             </li>
           )}
           <li>

@@ -53,6 +53,10 @@ export interface ProgramGuideStatus {
   status: "ok" | "failed" | "none";
   /** ISO timestamp of the most recent scrape (this one or an earlier one) that read the guide successfully */
   lastSuccessAt?: string;
+  /** The guide PDF that was actually used (status "ok") or last attempted */
+  sourceUrl?: string;
+  /** ISO timestamp from the guide file's HTTP Last-Modified header, i.e. when the city last updated the PDF itself */
+  updatedAt?: string;
 }
 
 export interface PoolRecord extends PoolInfo {
