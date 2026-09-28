@@ -69,7 +69,7 @@ workflow — nothing else to configure. The site ends up at
 
 ## Running it locally
 
-Requires Node 20+.
+Requires Node 24+ (the version the GitHub Actions workflow uses).
 
 ```bash
 npm install
