@@ -42,10 +42,24 @@ export interface PoolInfo {
   programGuideUrl?: string;
 }
 
+/**
+ * Whether this pool's own Program Guide PDF was read successfully.
+ * "ok": parsed at least one program's hours from it this scrape.
+ * "failed": the pool links a guide, but it couldn't be fetched or parsed —
+ *   the pool's hours fall back to the citywide combined schedule.
+ * "none": the pool's page doesn't link a program guide at all.
+ */
+export interface ProgramGuideStatus {
+  status: "ok" | "failed" | "none";
+  /** ISO timestamp of the most recent scrape (this one or an earlier one) that read the guide successfully */
+  lastSuccessAt?: string;
+}
+
 export interface PoolRecord extends PoolInfo {
   schedule: WeeklySchedule;
   closure: PoolClosureInfo;
   scheduleNotes: string[];
+  programGuide: ProgramGuideStatus;
 }
 
 export interface ScrapeResult {

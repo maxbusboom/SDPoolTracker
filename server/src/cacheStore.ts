@@ -28,7 +28,7 @@ export function getCache(): ScrapeResult | undefined {
 export async function refreshCache(): Promise<ScrapeResult> {
   if (refreshing) return refreshing;
   refreshing = (async () => {
-    const result = await runScrape();
+    const result = await runScrape(current ?? (await loadCache()));
     await mkdir(path.dirname(CACHE_PATH), { recursive: true });
     await writeFile(CACHE_PATH, JSON.stringify(result, null, 2));
     current = result;

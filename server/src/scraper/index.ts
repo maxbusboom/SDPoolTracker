@@ -4,10 +4,16 @@ import { fetchBuffer } from "./fetchHtml.js";
 import { parseClosureSchedule } from "./parseClosureSchedule.js";
 import { parseSwimSchedule } from "./parseSwimSchedule.js";
 import { parseProgramGuide, type PartialSchedule } from "./parseProgramGuide.js";
-import type { DayKey, PoolRecord, ProgramType, ScrapeResult } from "../types.js";
+import type { DayKey, PoolRecord, ProgramGuideStatus, ProgramType, ScrapeResult } from "../types.js";
 
-export async function runScrape(): Promise<ScrapeResult> {
+/**
+ * `previous` is the last scrape's result, if available; it's only used to
+ * carry forward when each pool's program guide was last read successfully.
+ */
+export async function runScrape(previous?: ScrapeResult): Promise<ScrapeResult> {
   const warnings: string[] = [];
+  const scrapedAt = new Date().toISOString();
+  const previousBySlug = new Map((previous?.pools ?? []).map((p) => [p.slug, p]));
 
   const { pools: poolListings, closureScheduleUrl, swimScheduleUrl } = await fetchPoolsPageData();
 
@@ -73,11 +79,13 @@ export async function runScrape(): Promise<ScrapeResult> {
       }
     }
 
-    return { ...info, schedule, closure, scheduleNotes };
+    const programGuide = programGuideStatus(info.programGuideUrl, guideSchedule, scrapedAt, previousBySlug.get(info.slug));
+
+    return { ...info, schedule, closure, scheduleNotes, programGuide };
   });
 
   return {
-    scrapedAt: new Date().toISOString(),
+    scrapedAt,
     swimScheduleEffectiveDate: swimResult.effectiveDate,
     swimScheduleSourceUrl: swimScheduleUrl,
     closureScheduleSourceUrl: closureScheduleUrl,
@@ -86,6 +94,18 @@ export async function runScrape(): Promise<ScrapeResult> {
     pools,
     warnings: [...warnings, ...swimResult.globalNotes.map((n) => `Global schedule note: ${n}`)],
   };
+}
+
+function programGuideStatus(
+  guideUrl: string | undefined,
+  guideSchedule: PartialSchedule | undefined,
+  scrapedAt: string,
+  previousPool: PoolRecord | undefined
+): ProgramGuideStatus {
+  if (guideSchedule && Object.keys(guideSchedule).length > 0) return { status: "ok", lastSuccessAt: scrapedAt };
+  // Older data files predate programGuide, so it may be missing.
+  const lastSuccessAt = previousPool?.programGuide?.lastSuccessAt;
+  return { status: guideUrl ? "failed" : "none", lastSuccessAt };
 }
 
 function emptySchedule(): PoolRecord["schedule"] {

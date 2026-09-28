@@ -137,6 +137,20 @@ main {
   gap: 0.4rem 0.5rem;
 }
 
+.guide-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+
+.guide-ok,
+.guide-none {
+  color: var(--muted);
+}
+
+.guide-failed {
+  color: var(--maintenance-text);
+}
+
 .pool-card h2 {
   font-size: 1.05rem;
   margin: 0 0 0.4rem;

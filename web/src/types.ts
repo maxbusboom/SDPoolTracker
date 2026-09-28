@@ -18,6 +18,11 @@ export interface PoolStatusInfo {
   nextChange?: string;
 }
 
+export interface ProgramGuideStatus {
+  status: "ok" | "failed" | "none";
+  lastSuccessAt?: string;
+}
+
 export interface PoolListItem {
   slug: string;
   name: string;
@@ -25,6 +30,7 @@ export interface PoolListItem {
   phone?: string;
   status: PoolStatusInfo;
   todaysHours: string[];
+  programGuide?: ProgramGuideStatus;
 }
 
 export interface DatedClosure {
@@ -79,6 +85,8 @@ export interface RawPoolRecord {
   schedule: WeeklySchedule;
   closure: PoolClosureInfo;
   scheduleNotes: string[];
+  // Absent in data.json files scraped before this was tracked.
+  programGuide?: ProgramGuideStatus;
 }
 
 export interface RawScrapeData {

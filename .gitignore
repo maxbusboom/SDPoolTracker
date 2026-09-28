@@ -8,3 +8,4 @@ server/data/cache.json
 server/data/pdf-cache/
 web/dist/
 web/public/data.json
+server/eng.traineddata

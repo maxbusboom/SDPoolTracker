@@ -31,13 +31,18 @@ jobs:
 
       - run: npm ci
 
+      # Before the scrape so its base_url can point the scraper at the
+      # currently deployed data.json (see PREVIOUS_DATA_URL in scrapeCli.ts).
+      - id: pages
+        uses: actions/configure-pages@v6
+
       - name: Scrape sandiego.gov/pools
         run: npm run scrape
+        env:
+          PREVIOUS_DATA_URL: ${{ steps.pages.outputs.base_url }}/data.json
 
       - name: Build frontend
         run: npm run build --workspace web
-
-      - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
         with:

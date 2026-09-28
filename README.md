@@ -59,6 +59,14 @@ live in your browser (against the last-scraped weekly schedule and closure
 dates) — that part is accurate to the minute. Only the underlying schedule
 and closure data itself is as fresh as the last scheduled scrape.
 
+Each pool card also says whether that pool's own Program Guide PDF was read
+successfully on the latest scrape. If it wasn't (e.g. the PDF has no
+readable text), the card shows when it was last read successfully and notes
+that the hours come from the citywide schedule instead. To remember that
+date across runs, the workflow gives the scraper the currently deployed
+`data.json` (`PREVIOUS_DATA_URL`); run locally, it uses the previous
+`server/data/cache.json`.
+
 ## Deploying to GitHub Pages
 
 One-time setup on GitHub: **Settings -> Pages -> Build and deployment ->

@@ -27,6 +27,7 @@ export async function fetchPools(): Promise<PoolListResponse> {
     phone: pool.phone,
     status: computePoolStatus(pool, now),
     todaysHours: getDaysHours(pool, now.dayKey),
+    programGuide: pool.programGuide,
   }));
   return { scrapedAt: data.scrapedAt, pools };
 }
